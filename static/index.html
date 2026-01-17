@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Habit Buddy Dashboard</title>
+  <style>
+    :root {
+      --primary: #667eea;
+      --secondary: #764ba2;
+      --success: #48bb78;
+      --warning: #ed8936;
+      --danger: #f56565;
+      --text: #1a202c;
+      --glass: rgba(255, 255, 255, 0.18);
+      --glass-border: rgba(255, 255, 255, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .dashboard {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    h1 {
+      font-size: 36px;
+      font-weight: 700;
+    }
+
+    .tagline {
+      font-size: 16px;
+      opacity: 0.85;
+    }
+
+    .glass {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+      backdrop-filter: blur(18px);
+    }
+
+    /* URGENCY TIMER CARD */
+    .urgency-card {
+      border: 2px solid var(--danger);
+      background: rgba(245, 101, 101, 0.2);
+      text-align: center;
+    }
+
+    .timer-display {
+      font-size: 48px;
+      font-weight: 800;
+      font-family: monospace;
+      color: #ff4d4d;
+      text-shadow: 0 0 10px rgba(255, 77, 77, 0.5);
+    }
+
+    .status-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      align-items: center;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 10px rgba(72, 187, 120, 0.9);
+    }
+
+    .status-dot.disconnected {
+      background: var(--danger);
+      box-shadow: 0 0 10px rgba(245, 101, 101, 0.9);
+    }
+
+    .status-dot.reconnecting {
+      background: var(--warning);
+      box-shadow: 0 0 10px rgba(237, 137, 54, 0.9);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr);
+      gap: 20px;
+    }
+
+    .streak-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .streak-number {
+      font-size: 96px;
+      font-weight: 800;
+      line-height: 1;
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    .streak-label {
+      font-size: 18px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.8;
+    }
+
+    .streak-message {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .progress-bar {
+      height: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #fbd38d, #f6ad55, #f56565);
+      transition: width 0.4s ease;
+    }
+
+    .sensor-card {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sensor-value {
+      font-size: 42px;
+      font-weight: 700;
+    }
+
+    .camera-card {
+      display: grid;
+      gap: 12px;
+    }
+
+    .camera-feed {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(15, 23, 42, 0.4);
+      object-fit: cover;
+    }
+
+    .micro-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      background: rgba(15, 23, 42, 0.25);
+      border-radius: 16px;
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    .milestones {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .milestone-card {
+      position: relative;
+      padding: 20px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.8);
+      transform: translateX(-20px);
+      opacity: 0;
+      animation: slideIn 0.8s ease forwards;
+    }
+
+    .milestone-card:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+
+    .milestone-card:nth-child(3) {
+      animation-delay: 0.2s;
+    }
+
+    .milestone-card.locked {
+      filter: grayscale(1);
+      opacity: 0.5;
+    }
+
+    .milestone-card.unlocked {
+      color: white;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.9));
+      box-shadow: 0 20px 30px rgba(15, 23, 42, 0.3);
+    }
+
+    .badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .badge.unlocked {
+      background: rgba(72, 187, 120, 0.9);
+    }
+
+    .milestone-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .milestone-desc {
+      font-size: 14px;
+      line-height: 1.4;
+      opacity: 0.9;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toggle input {
+      width: 44px;
+      height: 24px;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.3s ease;
+    }
+
+    .toggle input::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      transition: transform 0.3s ease;
+    }
+
+    .toggle input:checked {
+      background: rgba(72, 187, 120, 0.8);
+    }
+
+    .toggle input:checked::after {
+      transform: translateX(20px);
+    }
+
+    .sync-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .sync-status {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .sync-button {
+      border: none;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.4);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease;
+    }
+
+    .sync-button:hover {
+      transform: translateY(-1px);
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .timeline {
+      list-style: none;
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .timeline-item {
+      flex: 0 0 220px;
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .timeline-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .timeline-item.completed .timeline-dot {
+      background: var(--success);
+      box-shadow: 0 0 12px rgba(72, 187, 120, 0.8);
+    }
+
+    .timeline-item.active {
+      background: rgba(15, 23, 42, 0.4);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .timeline-track {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .timeline-progress {
+      position: absolute;
+      inset: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #48bb78, #63b3ed);
+      transition: width 0.4s ease;
+    }
+
+    .timeline-title {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .timeline-desc {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    .achievement-list {
+      list-style: none;
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .achievement-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+      transition: transform 0.3s ease, color 0.3s ease, background 0.3s ease;
+    }
+
+    .achievement-badge::before {
+      content: "";
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      display: inline-block;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+    }
+
+    .achievement-badge.earned {
+      color: white;
+      background: rgba(72, 187, 120, 0.25);
+      border-color: rgba(72, 187, 120, 0.6);
+      transform: translateX(4px);
+    }
+
+    .achievement-badge.earned::before {
+      background: var(--success);
+      box-shadow: 0 0 12px rgba(72, 187, 120, 0.9);
+      animation: popIn 0.6s ease;
+    }
+
+    @keyframes popIn {
+      0% {
+        transform: scale(0.6);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 999;
+    }
+
+    .confetti span {
+      position: absolute;
+      width: 8px;
+      height: 16px;
+      background: rgba(255, 255, 255, 0.9);
+      animation: fall 2.4s ease-in-out forwards;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    @keyframes slideIn {
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(-20vh) rotate(0deg);
+        opacity: 0;
+      }
+      20% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(120vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .streak-number {
+        font-size: 72px;
+      }
+
+      header {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <header>
+      <div>
+        <h1>Habit Buddy</h1>
+        <p class="tagline">Your desk companion for streak-powered growth.</p>
+      </div>
+      <div class="toggle" aria-label="Camera toggle">
+        <label for="cameraToggle">Camera</label>
+        <input id="cameraToggle" type="checkbox" aria-checked="true" checked />
+      </div>
+    </header>
+
+    <section class="glass urgency-card">
+        <div class="streak-label">Time Remaining Today</div>
+        <div id="countdownTimer" class="timer-display">00:00:00</div>
+        <p>Complete your habit before 11:59 PM to save your streak!</p>
+    </section>
+
+    <section class="glass status-bar" aria-live="polite">
+      <div class="status-pill">
+        <span id="statusDot" class="status-dot"></span>
+        <span id="connectionStatus">Connecting...</span>
+      </div>
+      <div>
+        <strong>Sensor</strong>
+        <div class="sensor-value"><span id="sensorValue">0</span>/1023</div>
+      </div>
+      <div>
+        <strong>Camera</strong>
+        <div id="cameraStatus">Connecting...</div>
+        <small id="actionStatus">Waiting for movement</small>
+      </div>
+      <div>
+        <strong>Last check-in</strong>
+        <div id="lastCheckin">Awaiting first check-in</div>
+      </div>
+      <button id="checkinButton" class="status-pill" aria-label="Send manual check-in" style="border:none; color:white; cursor:pointer;">Manual Check-in</button>
+    </section>
+
+    <section class="hero">
+      <div class="glass streak-card">
+        <div class="streak-label">Current streak</div>
+        <div class="streak-number" id="streakCount">0</div>
+        <div class="streak-message" id="streakMessage">Ready to start your journey?</div>
+        <div class="progress-bar" aria-label="Progress to next milestone">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <small id="progressText">0 / 3 days to unlock Sound Reactions</small>
+      </div>
+      <div class="glass sensor-card">
+        <div class="section-title">Achievements timeline</div>
+        <div class="timeline-track" aria-hidden="true">
+          <div class="timeline-progress" id="timelineProgress"></div>
+        </div>
+        <ol id="achievementTimeline" class="timeline" aria-label="Achievement timeline"></ol>
+        <div class="micro-stats">
+          <div class="stat">
+            <strong>Longest streak</strong>
+            <div id="longestStreak">0 days</div>
+          </div>
+          <div class="stat">
+            <strong>Total check-ins</strong>
+            <div id="totalCheckins">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">Milestone unlocks</h2>
+      <div class="milestones">
+        <article class="milestone-card locked" id="milestone-sound">
+          <span class="badge">Locked</span>
+          <div class="milestone-title">🔊 Sound Reactions (Day 3)</div>
+          <p class="milestone-desc">Buddy pulses green LED when you're near.</p>
+        </article>
+        <article class="milestone-card locked" id="milestone-nod">
+          <span class="badge">Locked</span>
+          <div class="milestone-title">👋 Head Nods (Day 7)</div>
+          <p class="milestone-desc">Buddy nods its servo head to greet you.</p>
+        </article>
+        <article class="milestone-card locked" id="milestone-chitter">
+          <span class="badge">Locked</span>
+          <div class="milestone-title">🎵 Chittering (Day 14)</div>
+          <p class="milestone-desc">Buddy makes happy chirping sounds.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h3 class="section-title">Achievement badges</h3>
+      <ul class="achievement-list" id="achievementBadges">
+        <li class="achievement-badge" data-day="7">🌟 Week Warrior</li>
+        <li class="achievement-badge" data-day="30">🏆 Month Master</li>
+        <li class="achievement-badge" data-day="14">🔥 Consistency Champion</li>
+      </ul>
+    </section>
+
+    <section class="glass camera-card">
+      <h3 class="section-title">Buddy cam</h3>
+      <video id="cameraFeed" class="camera-feed" autoplay muted playsinline></video>
+      <small id="cameraMessage">Camera is loading...</small>
+    </section>
+
+    <section class="glass sync-panel" aria-live="polite">
+      <div>
+        <h2 class="section-title">Buddy sync</h2>
+        <p id="statusMessage" class="sync-status">Sync status: connecting...</p>
+      </div>
+      <button id="syncButton" class="sync-button" aria-label="Sync now">Sync now</button>
+    </section>
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+
+  <script>
+    const statusDot = document.getElementById('statusDot');
+    const connectionStatus = document.getElementById('connectionStatus');
+    const sensorValue = document.getElementById('sensorValue');
+    const cameraStatus = document.getElementById('cameraStatus');
+    const actionStatus = document.getElementById('actionStatus');
+    const streakCount = document.getElementById('streakCount');
+    const streakMessage = document.getElementById('streakMessage');
+    const lastCheckin = document.getElementById('lastCheckin');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const statusMessage = document.getElementById('statusMessage');
+    const cameraToggle = document.getElementById('cameraToggle');
+    const longestStreak = document.getElementById('longestStreak');
+    const totalCheckins = document.getElementById('totalCheckins');
+    const checkinButton = document.getElementById('checkinButton');
+    const syncButton = document.getElementById('syncButton');
+    const achievementTimeline = document.getElementById('achievementTimeline');
+    const timelineProgress = document.getElementById('timelineProgress');
+    const achievementBadges = document.getElementById('achievementBadges');
+    const cameraFeed = document.getElementById('cameraFeed');
+    const cameraMessage = document.getElementById('cameraMessage');
+
+    cameraMessage.textContent = 'Camera is starting...';
+
+    // NEW URGENCY TIMER FUNCTION
+    function updateUrgencyTimer() {
+        const now = new Date();
+        const midnight = new Date();
+        midnight.setHours(23, 59, 59, 999);
+        const diff = midnight - now;
+
+        if (diff <= 0) {
+            document.getElementById('countdownTimer').textContent = "00:00:00";
+            return;
+        }
+
+        const hours = Math.floor(diff / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+
+        document.getElementById('countdownTimer').textContent = 
+            `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+    }
+    setInterval(updateUrgencyTimer, 1000);
+
+    const milestoneMap = {
+      sound: document.getElementById('milestone-sound'),
+      nod: document.getElementById('milestone-nod'),
+      chitter: document.getElementById('milestone-chitter')
+    };
+
+    let previousMilestones = { sound: false, nod: false, chitter: false };
+
+    function updateConnection(status, error) {
+      connectionStatus.textContent = status;
+      statusDot.classList.remove('disconnected', 'reconnecting');
+      if (status === 'disconnected') {
+        statusDot.classList.add('disconnected');
+        statusMessage.textContent = error || 'Sync status: buddy offline.';
+      } else if (status === 'reconnecting') {
+        statusDot.classList.add('reconnecting');
+        statusMessage.textContent = 'Sync status: reconnecting...';
+      } else {
+        statusMessage.textContent = 'Sync status: buddy connected.';
+      }
+    }
+
+    function updateCamera(status, actionDetected) {
+      if (cameraStream) {
+        cameraStatus.textContent = 'Local feed on';
+        actionStatus.textContent = actionDetected ? 'Action detected' : 'No action detected';
+        return;
+      }
+
+      cameraStatus.textContent = status === 'connected' ? 'Backend ready' : status === 'simulated' ? 'Simulated' : 'Camera off';
+      if (status !== 'connected' && status !== 'simulated') {
+        actionStatus.textContent = 'Enable camera to track movement.';
+        return;
+      }
+      actionStatus.textContent = actionDetected ? 'Action detected' : 'No action detected';
+    }
+
+    function updateMicrocopy(streak) {
+      if (streak === 0) return 'Ready to start your journey?';
+      if (streak <= 2) return 'Great start! Keep it going!';
+      if (streak <= 6) return "You're building momentum! 🚀";
+      if (streak <= 13) return 'One week strong! 💪';
+      return "You're unstoppable! 🌟";
+    }
+
+    function updateTimeline(streak) {
+      const items = [
+        { day: 1, title: 'First check-in', desc: 'You showed up. Keep that energy!' },
+        { day: 3, title: 'Sound reactions', desc: "Buddy pulses green LED when you're near." },
+        { day: 7, title: 'Head nods', desc: 'Buddy nods its servo head to greet you.' },
+        { day: 14, title: 'Chittering', desc: 'Buddy makes happy chirping sounds.' }
+      ];
+
+      achievementTimeline.innerHTML = '';
+      const lastDay = items[items.length - 1].day;
+      timelineProgress.style.width = `${Math.min((streak / lastDay) * 100, 100)}%`;
+
+      items.forEach((item, index) => {
+        const li = document.createElement('li');
+        const isComplete = streak >= item.day;
+        const isActive = !isComplete && (index === 0 || streak >= items[index - 1].day);
+        li.className = `timeline-item${isComplete ? ' completed' : ''}${isActive ? ' active' : ''}`;
+        li.innerHTML = `
+          <div class="timeline-dot" aria-hidden="true"></div>
+          <div>
+            <div class="timeline-title">Day ${item.day}: ${item.title}</div>
+            <div class="timeline-desc">${item.desc}</div>
+          </div>
+        `;
+        achievementTimeline.appendChild(li);
+      });
+    }
+
+    function updateAchievements(streak) {
+      if (!achievementBadges) return;
+      achievementBadges.querySelectorAll('.achievement-badge').forEach((badge) => {
+        const day = Number(badge.dataset.day || 0);
+        badge.classList.toggle('earned', streak >= day);
+      });
+    }
+
+    let cameraStream = null;
+
+    async function startCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        cameraMessage.textContent = 'Camera not supported in this browser.';
+        cameraToggle.checked = false;
+        cameraToggle.setAttribute('aria-checked', 'false');
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        cameraStream = stream;
+        cameraFeed.srcObject = stream;
+        cameraMessage.textContent = 'Camera active for action recognition.';
+        cameraToggle.checked = true;
+        cameraToggle.setAttribute('aria-checked', 'true');
+      } catch (error) {
+        cameraMessage.textContent = 'Camera access denied or unavailable.';
+        cameraToggle.checked = false;
+        cameraToggle.setAttribute('aria-checked', 'false');
+        cameraStream = null;
+      }
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+      }
+      cameraStream = null;
+      cameraFeed.srcObject = null;
+      cameraMessage.textContent = 'Camera is off.';
+      cameraToggle.setAttribute('aria-checked', 'false');
+    }
+
+    function milestoneProgress(streak) {
+      const targets = [3, 7, 14];
+      let next = targets.find(target => streak < target);
+      if (!next) {
+        progressFill.style.width = '100%';
+        progressText.textContent = 'All milestones unlocked!';
+        return;
+      }
+      const lastTarget = targets[targets.indexOf(next) - 1] || 0;
+      const percent = ((streak - lastTarget) / (next - lastTarget)) * 100;
+      progressFill.style.width = `${Math.min(Math.max(percent, 0), 100)}%`;
+      progressText.textContent = `${streak} / ${next} days to unlock ${next === 3 ? 'Sound Reactions' : next === 7 ? 'Head Nods' : 'Chittering'}`;
+    }
+
+    function updateMilestones(milestones) {
+      Object.keys(milestoneMap).forEach(key => {
+        const card = milestoneMap[key];
+        const badge = card.querySelector('.badge');
+        if (milestones[key]) {
+          card.classList.remove('locked');
+          card.classList.add('unlocked');
+          badge.textContent = 'Unlocked';
+          badge.classList.add('unlocked');
+          if (!previousMilestones[key]) {
+            triggerConfetti();
+          }
+        } else {
+          card.classList.add('locked');
+          card.classList.remove('unlocked');
+          badge.textContent = 'Locked';
+          badge.classList.remove('unlocked');
+        }
+      });
+      previousMilestones = { ...milestones };
+    }
+
+    function triggerConfetti() {
+      const container = document.getElementById('confetti');
+      container.innerHTML = '';
+      for (let i = 0; i < 40; i++) {
+        const piece = document.createElement('span');
+        piece.style.left = `${Math.random() * 100}vw`;
+        piece.style.background = `hsl(${Math.random() * 360}, 80%, 70%)`;
+        piece.style.animationDelay = `${Math.random() * 0.4}s`;
+        piece.style.opacity = Math.random().toString();
+        container.appendChild(piece);
+      }
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 2500);
+    }
+
+    async function fetchStatus() {
+      try {
+        const response = await fetch('/api/status');
+        const data = await response.json();
+        updateConnection(data.connection, data.error);
+        updateCamera(data.camera_status, data.action_detected);
+        sensorValue.textContent = data.sensor;
+        streakCount.textContent = data.streak;
+        streakMessage.textContent = updateMicrocopy(data.streak);
+        updateTimeline(data.streak);
+        updateAchievements(data.streak);
+        milestoneProgress(data.streak);
+        updateMilestones(data.milestones || {});
+        if (data.last_checkin) {
+          const date = new Date(data.last_checkin * 1000);
+          lastCheckin.textContent = date.toLocaleString();
+        }
+
+        if (Array.isArray(data.history)) {
+          totalCheckins.textContent = data.history.length;
+          const longest = data.history.reduce((max, entry) => Math.max(max, entry.streak), 0);
+          longestStreak.textContent = `${longest} days`;
+        }
+      } catch (error) {
+        updateConnection('disconnected', 'Dashboard could not reach the backend.');
+      }
+    }
+
+    checkinButton.addEventListener('click', async () => {
+      const response = await fetch('/api/checkin', { method: 'POST' });
+      const data = await response.json();
+      statusMessage.textContent = data.message || 'Check-in sent!';
+    });
+
+    syncButton.addEventListener('click', async () => {
+      await fetchStatus();
+      statusMessage.textContent = 'Sync status: refreshed just now.';
+    });
+
+    cameraToggle.addEventListener('change', async (event) => {
+      if (event.target.checked) {
+        await startCamera();
+      } else {
+        stopCamera();
+      }
+    });
+
+    startCamera();
+    fetchStatus();
+    setInterval(fetchStatus, 1000);
+  </script>
+</body>
+</html>
